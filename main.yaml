@@ -1,0 +1,47 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+resources:
+  repositories:
+    - repository: self
+    - repository: githubRepo
+      type: github
+      name: rithvik010/adfpro
+      endpoint: GitHub-adfpro-connection
+
+variables:
+  azureSubscription: 'Azure-RM-Connection'
+  dataFactoryName: 'myworkfactory'
+  resourceGroup: 'strawhats_group' 
+
+stages:
+- stage: DeployPipeline
+  displayName: 'Deploy ADF Pipeline to myworkfactory'
+  jobs:
+  - job: DeployADF
+    displayName: 'Deploy ADF'
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+    - checkout: self
+
+    - task: AzureCLI@2
+      displayName: 'Deploy ADF pipeline JSON'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Deploying pipeline to $(dataFactoryName)..."
+          az datafactory pipeline create \
+            --resource-group $(resourceGroup) \
+            --factory-name $(dataFactoryName) \
+            --name Pipeline2 \
+            --pipeline @pipeline/pipeline2.json
